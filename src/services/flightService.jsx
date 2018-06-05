@@ -18,7 +18,7 @@ export function userService() {
 export function reserveService(seat, user) {
 
   console.log(user,seat)
-  var url = "http://localhost:8080/seats/"+ seat._id;
+  var url = "https://flights-reservation.herokuapp.com/seats/"+ seat._id;
   return fetch(url, {
     headers: {
       'Accept': 'application/json',

@@ -7,7 +7,6 @@ cache:
   - node_modules
 warnings_are_errors: false
 script:
-  - npm test
   - npm run build
 deploy:
   provider: pages

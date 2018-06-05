@@ -17,7 +17,8 @@ import {
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import AccountCircle from '@material-ui/icons/AccountCircle';
+import List from '@material-ui/icons/List';
+import Back from '@material-ui/icons/ArrowBack';
 class ReservationForm extends React.Component {
   state = {
     seats: null,
@@ -37,7 +38,7 @@ class ReservationForm extends React.Component {
   };
   componentDidMount() {
     seatService().then(data => {
-      this.setState({ seats: data }, () => {
+      this.setState({ seats: data.seats }, () => {
         var rows = [];
         var seatsPerRow = 6;
         var rowsNumber = this.state.seats.length / seatsPerRow;
@@ -50,7 +51,7 @@ class ReservationForm extends React.Component {
           rows.push({ row });
         }
         this.setState({ rows });
-        console.log(rows);
+
       });
     });
   }
@@ -62,17 +63,24 @@ class ReservationForm extends React.Component {
   }
   reserve = () => {
     var user = {
-      name: this.state.name,
-      email: this.state.email,
-      number: this.state.number
+      "name": this.state.name,
+      "email": this.state.email,
+      "number": this.state.number
     };
     reserveService(this.state.selectedSeat, user)
       .then(response => {
         console.log(response);
+        if(response.ok){
+          this.setState({ msg:"seat reserved successfully" });
+        }
+        if(response.error){
+          this.setState({ msg:response.error  });
+        }
+        
       })
       .catch(() => {
         console.log("error");
-        this.setState({ msg: "something went" });
+        this.setState({ msg: "something went wrong" });
       });
   };
   selectSeat = selectedSeat => {
@@ -81,6 +89,7 @@ class ReservationForm extends React.Component {
   handleClose = () => {
     this.setState({ open: false });
   };
+
   renderDialog = () => {
     return (
       <Dialog
@@ -174,7 +183,7 @@ class ReservationForm extends React.Component {
       <AppBar position="static">
         <Toolbar>
           <Button color="inherit" onClick={this.handleSwitch}>
-          AccountCircle
+         { this.state.form ? <List/> : <Back/>  }    
             {title}
           </Button>
         </Toolbar>
@@ -184,15 +193,13 @@ class ReservationForm extends React.Component {
   renderReservatioForm = () => {
     return (
       <div>
-        <div className={"container"}>
+      { this.state.seats&& <div className={"container"}>
           <h1 style={{ textAlign: "center" }}>Please select a seat</h1>
           <div className="exit exit--front fuselage" />
           {this.renderSeats()}
           <div className="exit exit--back fuselage" />
           {this.renderDialog()}
-          {/* <Users/>
-      */}
-        </div>
+        </div>}
       </div>
     );
   };
@@ -211,8 +218,8 @@ class ReservationForm extends React.Component {
   render() {
     return (
       <div>
-        {this.renderAppBar()}
-        {this.state.form && !this.state.msg && this.renderReservatioForm()}
+        { !this.state.msg && this.renderAppBar()}
+        {this.state.form && !this.state.msg  && this.renderReservatioForm()}
         {!this.state.form && !this.state.msg && this.renderList()}
         {this.state.msg && this.renderResult()}
       </div>

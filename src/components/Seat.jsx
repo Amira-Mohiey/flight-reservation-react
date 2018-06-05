@@ -6,7 +6,7 @@ export default class Seat extends React.Component {
   };
 
   selectSeat = () => {
-    if(this.props.form){
+    if(this.props.form&&!this.props.seat.reserved){
     this.props.selectSeat(this.props.seat);}
   };
   render() {

@@ -7,22 +7,26 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
-
+import {
+  userService
+} from "../services/flightService";
 export default class Users extends React.Component {
+ state ={
+users:null
+ }
+  componentDidMount() {
+    userService().then(data => {
+      this.setState({ users: data }, () => {
+   
+
+      })
+    })
+  }
   render() {
-  var   seats = [
-      {
-        name: "1C",
-        user: { name: "amira", number: "112222", email: "amira@yahoo.com" }
-      },
-      {
-        name: "2B",
-        user: { name: "mohamed", number: "156222", email: "mohamed@yahoo.com" }
-      }
-    ];
+   
     return (
       <Paper >
-        <Table >
+        {this.state.users && <Table >
           <TableHead>
             <TableRow>
               <TableCell>User name</TableCell>
@@ -32,21 +36,21 @@ export default class Users extends React.Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            {seats.map(seat => {
+            {this.state.users.map(user => {
               return (
-                <TableRow key={seat.name}>
+                <TableRow key={user._id}>
                   <TableCell component="th" scope="row">
-                    {seat.user.name}
+                    {user.name}
                   </TableCell>
-                
-                  <TableCell >{seat.user.number}</TableCell>
-                  <TableCell >{seat.user.email}</TableCell>
-                  <TableCell >{seat.name}</TableCell>
+
+                  <TableCell >{user.number}</TableCell>
+                  <TableCell >{user.email}</TableCell>
+                  <TableCell >{user.seat.name}</TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
-        </Table>
+        </Table>}
       </Paper>
     );
   }

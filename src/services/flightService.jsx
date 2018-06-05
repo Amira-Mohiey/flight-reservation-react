@@ -16,9 +16,16 @@ export function userService() {
   });
 }
 export function reserveService(seat, user) {
-  var url = "https://flights-reservation.herokuapp.com/"+ seat._id;
+
+  console.log(user,seat)
+  var url = "http://localhost:8080/seats/"+ seat._id;
   return fetch(url, {
-    method: "PUT"
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    method: "PUT",
+    body: JSON.stringify(user),
   }).then(response => {
     return response.json();
   });

@@ -1,0 +1,73 @@
+name: Release Candidate
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Set user
+        run: git config user.name seera-frontend && git config user.email seera-frontend@seera.sa
+
+      - name: Build
+        run: npm run build
+
+      - name: Get master branch tag
+        run:  echo "MASTER_TAG=$(echo $(git ls-remote --tags | tail -n 1 | cut -d'/' -f 3 ))" >> $GITHUB_ENV
+       
+      - name: Get develop branch tag
+        run:  echo "DEVELOP_TAG=$(echo $(git describe --tags --abbrev=0))" >> $GITHUB_ENV
+
+      - name: Default Release
+        id: defaultReleaseStep
+        run: echo "RELEASE_TYPE=rc" >> $GITHUB_ENV
+
+      - name: Release Type
+        id: releaseTypeStep
+        run: |
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+          fi
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
+          fi
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=major" >> $GITHUB_ENV
+          fi
+            
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+          fi
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=preminor" >> $GITHUB_ENV
+          fi
+          
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+            echo "RELEASE_TYPE=premajor" >> $GITHUB_ENV
+          fi
+     
+      - name: Release
+        run: npm run release:rc $RELEASE_TYPE
+        id: releaseStep
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

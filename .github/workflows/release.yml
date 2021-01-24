@@ -23,17 +23,10 @@ jobs:
         run: npm ci
 
       - name: Set user
-        run: git config user.name seera-frontend && git config user.email seera-frontend@seera.sa
+        run: git config user.name Amira-Mohiey && git config user.email amiramohiey92@gmail.com
 
       - name: Build
         run: npm run build
-
-      - name: Disable master Protection
-        run: |
-          curl --location --request PUT 'https://api.github.com/repos/tajawal/web-desktop-flights/branches/master/protection' \
-          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{ "required_pull_request_reviews": null, "required_status_checks": null, "enforce_admins": null,"restrictions": null }'
 
       - name: Default Release
         id: defaultReleaseStep
@@ -59,10 +52,3 @@ jobs:
         id: releaseStep
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable master Protection
-        run: |
-          curl --location --request PATCH 'https://api.github.com/repos/tajawal/web-desktop-flights/branches/master/protection/required_pull_request_reviews' \
-          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{}'

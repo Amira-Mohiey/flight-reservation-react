@@ -1,0 +1,68 @@
+name: Release
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Set user
+        run: git config user.name seera-frontend && git config user.email seera-frontend@seera.sa
+
+      - name: Build
+        run: npm run build
+
+      - name: Disable master Protection
+        run: |
+          curl --location --request PUT 'https://api.github.com/repos/tajawal/web-desktop-flights/branches/master/protection' \
+          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{ "required_pull_request_reviews": null, "required_status_checks": null, "enforce_admins": null,"restrictions": null }'
+
+      - name: Default Release
+        id: defaultReleaseStep
+        run: echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+
+      - name: Release Type
+        id: releaseTypeStep
+        run: |
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]]; then
+            echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+          fi
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]]; then
+            echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
+          fi
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]]; then
+            echo "RELEASE_TYPE=major" >> $GITHUB_ENV
+          fi
+
+      - name: Release
+        run: npm run release:$RELEASE_TYPE
+        id: releaseStep
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable master Protection
+        run: |
+          curl --location --request PATCH 'https://api.github.com/repos/tajawal/web-desktop-flights/branches/master/protection/required_pull_request_reviews' \
+          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{}'

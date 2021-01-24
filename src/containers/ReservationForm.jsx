@@ -34,11 +34,16 @@ class ReservationForm extends React.Component {
     saving:false
 
   };
+
+
   handleChange = name => event => {
     this.setState({
       [name]: event.target.value
     });
   };
+
+
+  
 getSeats=()=>{
   seatService().then(data => {
     this.setState({ seats: data.seats }, () => {

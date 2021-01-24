@@ -6,7 +6,7 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true
     steps:
       - name: Checkout
@@ -23,7 +23,7 @@ jobs:
         run: npm ci
 
       - name: Set user
-        run: git config user.name seera-frontend && git config user.email seera-frontend@seera.sa
+        run: git config user.name Amira-Mohiey && git config user.email amiramohiey92@gmail.com
 
       - name: Build
         run: npm run build

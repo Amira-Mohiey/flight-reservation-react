@@ -63,6 +63,9 @@ getSeats=()=>{
     });
   });
 }
+
+
+
   componentDidMount() {
    this.getSeats()
   }

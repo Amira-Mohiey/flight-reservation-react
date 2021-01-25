@@ -108,7 +108,7 @@ jobs:
 
      
       - name: Release
-        run: RELEASE_TYPE=$RELEASE_TYPE npm run release:rc
+        run: RELEASE_TYPE=minor npm run release:rc
         id: releaseStep
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

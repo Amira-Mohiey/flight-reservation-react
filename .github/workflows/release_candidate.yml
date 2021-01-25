@@ -1,115 +1,182 @@
+# name: Release Candidate
+# on:
+#   pull_request:
+#     types: [closed]
+#     branches: [develop]
+# jobs:
+#   release:
+#     name: Release
+#     runs-on: ubuntu-latest
+#     if: github.event.pull_request.merged == true
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v2
+#         with:
+#           fetch-depth: 0
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v1
+#         with:
+#           node-version: 12.x
+
+#       - name: Install npm dependencies
+#         run: npm ci
+
+#       - name: Set user
+#         run: git config user.name Amira-Mohiey && git config user.email amiramohiey92@gmail.com
+
+#       - name: Build
+#         run: npm run build
+
+#       - name: Get master branch tag
+#         run:  echo "MASTER_TAG=$(echo $(git ls-remote --tags | egrep -v "RC|\^" | tail -n 1 | cut -d'/' -f 3 ))" >> $GITHUB_ENV
+       
+#       - name: Get develop branch tag
+#         run:  echo "DEVELOP_TAG=$(echo $(git describe --tags --abbrev=0))" >> $GITHUB_ENV
+                   
+#       # check if the tag of the master is the same as the tag on develop (to see if this is the first PR to be merged on develop)
+#       - name: Compare tags
+#         run: |
+#           if [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+#           echo "TAGS_EQUAL=true" >> $GITHUB_ENV
+#           else
+#           echo "TAGS_EQUAL=false" >> $GITHUB_ENV
+#           fi
+
+#       # set default release to be patch if this is the first PR to develop (same tag on master and develop), otherwise set default release to prepatch.
+#       - name: Default Release
+#         id: defaultReleaseStep
+#         run: |
+#           if "$TAGS_EQUAL"; then
+#           echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+#           else
+#           echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+#           fi
+  
+#       # check if the current version on develop branch is patch 
+#       - name: Check if version is Patch 
+#         run: |
+#           LAST_DIGIT=$(echo $DEVELOP_TAG | cut -f3 -d'.' | cut -f1 -d'-')
+#           if [[ "$LAST_DIGIT" != 0 ]]; then
+#           echo "IS_PATCH=true" >> $GITHUB_ENV
+#           else
+#           echo "IS_PATCH=false" >> $GITHUB_ENV
+#           fi
+
+#       # check if the current version on develop branch is minor 
+#       - name: Check if version is minor
+#         run: |
+#           MIDDLE_DIGIT=$(echo $DEVELOP_TAG | cut -f2 -d'.')
+#           if [[ "$MIDDLE_DIGIT" != 0 ]] && ! "$IS_PATCH"; then
+#           echo "IS_MINOR=true" >> $GITHUB_ENV
+#           else
+#           echo "IS_MINOR=false" >> $GITHUB_ENV
+#           fi
+
+#       - name: Release Type
+#         id: releaseTypeStep
+#         run: |
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+#           fi
+
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
+#           fi
+
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=major" >> $GITHUB_ENV
+#           fi
+            
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && ! "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+#           fi
+          
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && ! "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=preminor" >> $GITHUB_ENV
+#             if "$IS_PATCH"; then
+#               echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
+#             fi
+#           fi
+ 
+#           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && ! "$TAGS_EQUAL"; then
+#             echo "RELEASE_TYPE=premajor" >> $GITHUB_ENV
+#             if "$IS_MINOR"; then
+#               echo "RELEASE_TYPE=major" >> $GITHUB_ENV
+#             fi
+#           fi
+
+     
+#       - name: Release
+#         run: npm run release:rc
+#         id: releaseStep
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Creates a Pre-Release Release Candidate Github Tag 
+# and Release when PR is merged/closed to develop
+# Use PR label
+  # norelease - when you do not want to release rc candidate but want to merge
+
 name: Release Candidate
+
 on:
   pull_request:
     types: [closed]
     branches: [develop]
-jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
+jobs:
+  check: 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exit gracefully if not a release
+        id: releaseExitStep
+        run: |
+          echo "::set-output name=should_release::true"
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'norelease') }} = "true" ]]; then
+            echo "::set-output name=should_release::false"
+          fi
+    outputs:
+      status: ${{steps.releaseExitStep.outputs.should_release}}
+
+
+  release:
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.event.pull_request.merged == true && needs.check.outputs.status == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
       - name: Setup Node.js
         uses: actions/setup-node@v1
         with:
           node-version: 12.x
 
-      - name: Install npm dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Set user
+      - name: Set git user
         run: git config user.name Amira-Mohiey && git config user.email amiramohiey92@gmail.com
 
-      - name: Build
-        run: npm run build
 
-      - name: Get master branch tag
-        run:  echo "MASTER_TAG=$(echo $(git ls-remote --tags | egrep -v "RC|\^" | tail -n 1 | cut -d'/' -f 3 ))" >> $GITHUB_ENV
-       
-      - name: Get develop branch tag
-        run:  echo "DEVELOP_TAG=$(echo $(git describe --tags --abbrev=0))" >> $GITHUB_ENV
-                   
-      # check if the tag of the master is the same as the tag on develop (to see if this is the first PR to be merged on develop)
-      - name: Compare tags
+      - name: Disable develop protection
         run: |
-          if [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
-          echo "TAGS_EQUAL=true" >> $GITHUB_ENV
-          else
-          echo "TAGS_EQUAL=false" >> $GITHUB_ENV
-          fi
-
-      # set default release to be patch if this is the first PR to develop (same tag on master and develop), otherwise set default release to prepatch.
-      - name: Default Release
-        id: defaultReleaseStep
-        run: |
-          if "$TAGS_EQUAL"; then
-          echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
-          else
-          echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
-          fi
-  
-      # check if the current version on develop branch is patch 
-      - name: Check if version is Patch 
-        run: |
-          LAST_DIGIT=$(echo $DEVELOP_TAG | cut -f3 -d'.' | cut -f1 -d'-')
-          if [[ "$LAST_DIGIT" != 0 ]]; then
-          echo "IS_PATCH=true" >> $GITHUB_ENV
-          else
-          echo "IS_PATCH=false" >> $GITHUB_ENV
-          fi
-
-      # check if the current version on develop branch is minor 
-      - name: Check if version is minor
-        run: |
-          MIDDLE_DIGIT=$(echo $DEVELOP_TAG | cut -f2 -d'.')
-          if [[ "$MIDDLE_DIGIT" != 0 ]] && ! "$IS_PATCH"; then
-          echo "IS_MINOR=true" >> $GITHUB_ENV
-          else
-          echo "IS_MINOR=false" >> $GITHUB_ENV
-          fi
-
-      - name: Release Type
-        id: releaseTypeStep
-        run: |
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
-          fi
-
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
-          fi
-
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=major" >> $GITHUB_ENV
-          fi
-            
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && ! "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
-          fi
-          
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && ! "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=preminor" >> $GITHUB_ENV
-            if "$IS_PATCH"; then
-              echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
-            fi
-          fi
- 
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && ! "$TAGS_EQUAL"; then
-            echo "RELEASE_TYPE=premajor" >> $GITHUB_ENV
-            if "$IS_MINOR"; then
-              echo "RELEASE_TYPE=major" >> $GITHUB_ENV
-            fi
-          fi
-
-     
-      - name: Release
+          curl --location --request PUT 'https://api.github.com/repos/tajawal/eurika-ui/branches/develop/protection' \
+          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{ "required_pull_request_reviews": null, "required_status_checks": null, "enforce_admins": null,"restrictions": null }'
+      - name: Release a Release Candidate version
         run: npm run release:rc
         id: releaseStep
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Enable develop protection
+        if: ${{ always() }}
+        run: |
+          curl --location --request PATCH 'https://api.github.com/repos/tajawal/eurika-ui/branches/develop/protection/required_pull_request_reviews' \
+          --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{}'

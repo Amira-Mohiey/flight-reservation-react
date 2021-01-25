@@ -71,7 +71,7 @@ getSeats=()=>{
     this.setState({ form: !this.state.form });
   };
   componentWillReceiveProps(nextProps) {
-    console.log("helo")
+
     this.setState({ seats: nextProps.seats });
   }
    TransitionUp=(props)=> {

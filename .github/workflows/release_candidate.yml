@@ -33,7 +33,8 @@ jobs:
        
       - name: Get develop branch tag
         run:  echo "DEVELOP_TAG=$(echo $(git describe --tags --abbrev=0))" >> $GITHUB_ENV
-        
+                   
+      # check if the tag of the master is the same as the tag on develop (to see if this is the first PR to be merged on develop)
       - name: Compare tags
         run: |
           if [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
@@ -42,13 +43,34 @@ jobs:
           echo "TAGS_EQUAL=false" >> $GITHUB_ENV
           fi
 
+      # set default release to be patch if this is the first PR to develop (same tag on master and develop), otherwise set default release to prepatch.
       - name: Default Release
         id: defaultReleaseStep
         run: |
           if "$TAGS_EQUAL"; then
-          echo echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+          echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
           else
-          echo echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+          echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+          fi
+  
+      # check if the current version on develop branch is patch 
+      - name: Check if version is Patch 
+        run: |
+          LAST_DIGIT=$(echo $DEVELOP_TAG | cut -f3 -d'.')
+          if [[ "$LAST_DIGIT" != 0 ]]; then
+          echo "IS_PATCH=true" >> $GITHUB_ENV
+          else
+          echo "IS_PATCH=false" >> $GITHUB_ENV
+          fi
+
+      # check if the current version on develop branch is minor 
+      - name: Check if version is minor
+        run: |
+          MIDDLE_DIGIT=$(echo $DEVELOP_TAG | cut -f2 -d'.')
+          if [[ "$MIDDLE_DIGIT" != 0 ]]; then
+          echo "IS_MINOR=true" >> $GITHUB_ENV
+          else
+          echo "IS_MINOR=false" >> $GITHUB_ENV
           fi
 
       - name: Release Type
@@ -69,13 +91,19 @@ jobs:
           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
           fi
-
+          
           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=preminor" >> $GITHUB_ENV
+            if "$IS_PATCH"; then
+              echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
+            fi
           fi
-
+ 
           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=premajor" >> $GITHUB_ENV
+            if "$IS_MINOR"; then
+              echo "RELEASE_TYPE=major" >> $GITHUB_ENV
+            fi
           fi
 
      

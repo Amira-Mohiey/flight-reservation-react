@@ -33,37 +33,51 @@ jobs:
        
       - name: Get develop branch tag
         run:  echo "DEVELOP_TAG=$(echo $(git describe --tags --abbrev=0))" >> $GITHUB_ENV
+        
+      - name: Compare tags
+        run: |
+          if [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+          echo "TAGS_EQUAL=true" >> $GITHUB_ENV
+          else
+          echo "TAGS_EQUAL=false" >> $GITHUB_ENV
+          fi
 
       - name: Default Release
         id: defaultReleaseStep
-        run: echo "RELEASE_TYPE=rc" >> $GITHUB_ENV
+        run: |
+          if "$TAGS_EQUAL"; then
+          echo echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
+          else
+          echo echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
+          fi
 
       - name: Release Type
         id: releaseTypeStep
         run: |
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
           fi
 
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=minor" >> $GITHUB_ENV
           fi
 
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && [[ "$MASTER_TAG" == "$DEVELOP_TAG" ]]; then
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=major" >> $GITHUB_ENV
           fi
             
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=prepatch" >> $GITHUB_ENV
           fi
 
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'minor') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=preminor" >> $GITHUB_ENV
           fi
-          
-          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && [[ "$MASTER_TAG" != "$DEVELOP_TAG" ]]; then
+
+          if [[ ${{ contains(github.event.pull_request.labels.*.name, 'major') }} = "true" ]] && ! "$TAGS_EQUAL"; then
             echo "RELEASE_TYPE=premajor" >> $GITHUB_ENV
           fi
+
      
       - name: Release
         run: npm run release:rc $RELEASE_TYPE

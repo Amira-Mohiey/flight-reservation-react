@@ -180,3 +180,4 @@ jobs:
           --header 'Authorization: token ${{ secrets.SEERA_FRONTEND_TOKEN }}' \
           --header 'Content-Type: application/json' \
           --data-raw '{}'
+          

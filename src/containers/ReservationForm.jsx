@@ -64,8 +64,6 @@ getSeats=()=>{
   });
 }
 
-
-
   componentDidMount() {
    this.getSeats()
   }

@@ -67,7 +67,7 @@ jobs:
       - name: Check if version is minor
         run: |
           MIDDLE_DIGIT=$(echo $DEVELOP_TAG | cut -f2 -d'.')
-          if [[ "$MIDDLE_DIGIT" != 0 ]]; then
+          if [[ "$MIDDLE_DIGIT" != 0 ]] && ! "$IS_PATCH"; then
           echo "IS_MINOR=true" >> $GITHUB_ENV
           else
           echo "IS_MINOR=false" >> $GITHUB_ENV
@@ -108,7 +108,7 @@ jobs:
 
      
       - name: Release
-        run: npm run release:rc $RELEASE_TYPE
+        run: npm run release:rc
         id: releaseStep
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,6 @@
 {
   "name": "flights",
-  "version": "0.6.0",
+  "version": "0.6.1-RC.5",
   "private": true,
   "homepage": "https://Amira-Mohiey.github.io/flight-reservation-react",
   "dependencies": {
@@ -19,6 +19,6 @@
     "release:major": "release-it major",
     "release:patch": "release-it patch",
     "release:minor": "release-it minor",
-    "release:rc": "release-it $RELEASE_TYPE --preRelease=RC --github.preRelease"
+    "release:rc": "release-it patch --preRelease=RC --github.preRelease"
   }
 }

@@ -19,6 +19,6 @@
     "release:major": "release-it major",
     "release:patch": "release-it patch",
     "release:minor": "release-it minor",
-    "release:rc": "release-it minor --preRelease=RC --github.preRelease"
+    "release:rc": "release-it $RELEASE_TYPE --preRelease=RC --github.preRelease"
   }
 }

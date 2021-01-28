@@ -32,7 +32,6 @@
     "release": true,
     "releaseName": "${version}",
     "releaseNotes": null,
-    "preRelease": false,
     "draft": false,
     "tokenRef": "GITHUB_TOKEN",
     "assets": null,

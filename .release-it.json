@@ -28,5 +28,17 @@
   },
   "npm": {
     "publish": false
+  },
+  "github": {
+    "release": false,
+    "releaseName": "${version}",
+    "releaseNotes": null,
+    "preRelease": true,
+    "draft": false,
+    "tokenRef": "GITHUB_TOKEN",
+    "assets": null,
+    "host": null,
+    "timeout": 0,
+    "proxy": null
   }
 }

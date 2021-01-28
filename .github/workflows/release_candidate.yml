@@ -35,7 +35,7 @@ jobs:
       - name: Release Type
         id: releaseTypeStep
         run: |
-          gh 
+          gh --version 
           if [[ ${{ contains(github.event.pull_request.labels.*.name, 'patch') }} = "true" ]]; then
             echo "RELEASE_TYPE=patch" >> $GITHUB_ENV
           fi

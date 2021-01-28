@@ -1,6 +1,6 @@
 {
   "name": "flights",
-  "version": "1.0.0-RC.8",
+  "version": "1.0.0-RC.9",
   "private": true,
   "homepage": "https://Amira-Mohiey.github.io/flight-reservation-react",
   "dependencies": {
